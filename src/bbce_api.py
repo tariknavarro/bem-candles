@@ -9,11 +9,17 @@ AMBIENTE = "https://api-ehub.bbce.com.br/"
 
 
 def _get_secret(key: str) -> str:
-    """Lê segredo do st.secrets (Streamlit Cloud) ou de variável de ambiente."""
+    """
+    Lê segredo do st.secrets (Streamlit Cloud) ou de variável de ambiente.
+    Verifica 'key in st.secrets' antes de acessar, evitando o aviso de console
+    'No secrets found' quando não há secrets.toml configurado.
+    """
     try:
-        return st.secrets[key]
+        if hasattr(st, "secrets") and key in st.secrets:
+            return st.secrets[key]
     except Exception:
-        return os.getenv(key, "")
+        pass
+    return os.getenv(key, "")
 
 
 def login_api(
