@@ -173,6 +173,9 @@ def main():
 
     # --- Aplica filtro de tipo de operação sobre o DataFrame bruto ---
     df_raw = st.session_state.get("df_raw", pd.DataFrame())
+    if df_raw.empty or "originOperationType" not in df_raw.columns:
+        st.warning("Dados ainda não carregados. Aguarde...")
+        return
     if tipo_operacao == "Match":
         df_all = df_raw[df_raw["originOperationType"] == "Match"]
     else:
