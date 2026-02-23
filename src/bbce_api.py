@@ -172,38 +172,16 @@ def connect_bbce() -> bool:
         st.error("Nenhum dado retornado da BBCE.")
         return False
 
-    df = df[(df["originOperationType"] == "Match") & (df["status"] == "Ativo")]
-
-    # Produtos ordenados por volume total
-    volume_por_produto = df.groupby("productId")["quantity"].sum().sort_values(
-        ascending=False
-    )
-    produtos = []
-    for product_id in volume_por_produto.index:
-        descricao = next(
-            (
-                t.get("description", "")
-                for t in tickers_validos
-                if t["id"] == product_id
-            ),
-            None,
-        )
-        if descricao and _is_valid_product_name(descricao):
-            produtos.append(
-                {
-                    "id": product_id,
-                    "description": descricao,
-                    "volume": volume_por_produto[product_id],
-                }
-            )
+    # Guarda apenas o filtro de status; o filtro de originOperationType
+    # é aplicado dinamicamente na UI conforme o seletor Match / Boleta.
+    df = df[df["status"] == "Ativo"]
 
     st.session_state.token = token
     st.session_state.refresh_token = refresh_token
     st.session_state.api_key = api_key
     st.session_state.wallet_id = wallet_id
     st.session_state.tickers = tickers_validos
-    st.session_state.df = df
-    st.session_state.produtos_ordenados = produtos
+    st.session_state.df_raw = df          # DataFrame bruto (sem filtro de tipo)
     st.session_state.ultima_atualizacao = datetime.now()
     st.session_state.logado_bbce = True
     st.session_state.range_type = "2M"
@@ -225,8 +203,8 @@ def refresh_deals() -> bool:
     if df.empty:
         return False
 
-    df = df[(df["originOperationType"] == "Match") & (df["status"] == "Ativo")]
-    st.session_state.df = df
+    df = df[df["status"] == "Ativo"]
+    st.session_state.df_raw = df
     st.session_state.ultima_atualizacao = datetime.now()
     return True
 

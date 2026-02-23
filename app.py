@@ -1,6 +1,7 @@
 import time
 from threading import Thread
 
+import pandas as pd
 import streamlit as st
 from dotenv import load_dotenv
 
@@ -62,6 +63,31 @@ st.markdown(
 )
 
 
+# ==================== UTILITÁRIOS ====================
+def _build_produtos(df: pd.DataFrame, tickers_validos: list) -> list:
+    """Retorna lista de produtos ordenados por volume para o DataFrame fornecido."""
+    if df.empty:
+        return []
+    volume_por_produto = (
+        df.groupby("productId")["quantity"].sum().sort_values(ascending=False)
+    )
+    produtos = []
+    for product_id in volume_por_produto.index:
+        descricao = next(
+            (t.get("description", "") for t in tickers_validos if t["id"] == product_id),
+            None,
+        )
+        if descricao and descricao.strip():
+            produtos.append(
+                {
+                    "id": product_id,
+                    "description": descricao,
+                    "volume": volume_por_produto[product_id],
+                }
+            )
+    return produtos
+
+
 # ==================== ATUALIZAÇÃO AUTOMÁTICA ====================
 def _auto_refresh_thread():
     """Recarrega deals a cada 20 minutos em background."""
@@ -110,14 +136,22 @@ def main():
             unsafe_allow_html=True,
         )
 
-    # --- Controles: indicadores e período ---
-    col_ind, col_period = st.columns([2, 1])
+    # --- Controles: indicadores, tipo de operação e período ---
+    col_ind, col_tipo, col_period = st.columns([2, 1, 1])
     with col_ind:
         indicadores = st.multiselect(
             "📊 Indicadores",
             options=["SMA8", "SMA20", "SMA50", "Bollinger Bands 8"],
             default=["SMA8", "SMA20"],
             key="indicadores_main",
+        )
+    with col_tipo:
+        tipo_operacao = st.radio(
+            "Tipo de operação",
+            options=["Match", "Boleta"],
+            index=0,
+            horizontal=True,
+            key="tipo_operacao",
         )
     with col_period:
         periodo = st.radio(
@@ -129,7 +163,17 @@ def main():
         )
         st.session_state.range_type = periodo
 
-    produtos = st.session_state.get("produtos_ordenados", [])
+    # --- Aplica filtro de tipo de operação sobre o DataFrame bruto ---
+    df_raw = st.session_state.get("df_raw", pd.DataFrame())
+    if tipo_operacao == "Match":
+        df_all = df_raw[df_raw["originOperationType"] == "Match"]
+    else:
+        df_all = df_raw  # Boleta: sem filtro por tipo
+
+    # --- Calcula produtos disponíveis para o tipo selecionado ---
+    tickers_validos = st.session_state.get("tickers", [])
+    produtos = _build_produtos(df_all, tickers_validos)
+
     if len(produtos) < 2:
         st.warning("Não há produtos suficientes para análise.")
         return
@@ -163,7 +207,6 @@ def main():
 
     produto1 = produtos[idx1]
     produto2 = produtos[idx2]
-    df_all = st.session_state.df
 
     # --- Dados completos por produto ---
     df_raw1 = df_all[df_all["productId"] == produto1["id"]]
