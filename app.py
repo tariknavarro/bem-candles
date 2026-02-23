@@ -136,8 +136,8 @@ def main():
             unsafe_allow_html=True,
         )
 
-    # --- Controles: indicadores, tipo de operação e período ---
-    col_ind, col_tipo, col_period = st.columns([2, 1, 1])
+    # --- Controles: indicadores, tipo de operação, timeframe e período ---
+    col_ind, col_tipo, col_tf, col_period = st.columns([2, 1, 1, 1])
     with col_ind:
         indicadores = st.multiselect(
             "📊 Indicadores",
@@ -152,6 +152,14 @@ def main():
             index=0,
             horizontal=True,
             key="tipo_operacao",
+        )
+    with col_tf:
+        timeframe = st.radio(
+            "Timeframe",
+            options=["Diário", "Semanal", "Quinzenal", "Mensal"],
+            index=0,
+            horizontal=True,
+            key="timeframe",
         )
     with col_period:
         periodo = st.radio(
@@ -212,11 +220,11 @@ def main():
     df_raw1 = df_all[df_all["productId"] == produto1["id"]]
     df_raw2 = df_all[df_all["productId"] == produto2["id"]]
 
-    vwap1 = calcular_vwap(df_raw1)
-    vwap2 = calcular_vwap(df_raw2)
+    vwap1 = calcular_vwap(df_raw1, timeframe)
+    vwap2 = calcular_vwap(df_raw2, timeframe)
 
-    df_ohlc1_full = calcular_indicadores(build_ohlc(df_raw1), indicadores)
-    df_ohlc2_full = calcular_indicadores(build_ohlc(df_raw2), indicadores)
+    df_ohlc1_full = calcular_indicadores(build_ohlc(df_raw1, timeframe), indicadores)
+    df_ohlc2_full = calcular_indicadores(build_ohlc(df_raw2, timeframe), indicadores)
 
     # --- Filtro de período apenas para visualização ---
     range_type = st.session_state.get("range_type", "2M")
@@ -227,19 +235,19 @@ def main():
     col_g1, col_g2, col_g3 = st.columns(3)
     with col_g1:
         st.plotly_chart(
-            plot_produto_com_volume(df_ohlc1, indicadores),
+            plot_produto_com_volume(df_ohlc1, indicadores, timeframe),
             use_container_width=True,
             config={"displayModeBar": False},
         )
     with col_g2:
         st.plotly_chart(
-            plot_produto_com_volume(df_ohlc2, indicadores),
+            plot_produto_com_volume(df_ohlc2, indicadores, timeframe),
             use_container_width=True,
             config={"displayModeBar": False},
         )
     with col_g3:
         st.plotly_chart(
-            plot_spread_area(df_ohlc1, df_ohlc2, produto1["description"], produto2["description"]),
+            plot_spread_area(df_ohlc1, df_ohlc2, produto1["description"], produto2["description"], timeframe),
             use_container_width=True,
             config={"displayModeBar": False},
         )
@@ -257,7 +265,7 @@ def main():
     }
 
     with col_t1:
-        tabela1 = criar_tabela_ohlc(df_ohlc1, vwap1)
+        tabela1 = criar_tabela_ohlc(df_ohlc1, vwap1, timeframe)
         if not tabela1.empty:
             st.dataframe(tabela1, use_container_width=True, hide_index=True,
                          height=210, column_config=col_config)
@@ -265,7 +273,7 @@ def main():
             st.info("Sem dados para exibir")
 
     with col_t2:
-        tabela2 = criar_tabela_ohlc(df_ohlc2, vwap2)
+        tabela2 = criar_tabela_ohlc(df_ohlc2, vwap2, timeframe)
         if not tabela2.empty:
             st.dataframe(tabela2, use_container_width=True, hide_index=True,
                          height=210, column_config=col_config)

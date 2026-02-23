@@ -2,6 +2,8 @@ import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
+from src.data_processing import TIMEFRAME_DATE_FMT
+
 COLORS_IND = {"SMA8": "#FB8E00", "SMA20": "#1E88E5", "SMA50": "#4CAF50"}
 
 
@@ -14,18 +16,20 @@ def _last_valid(series: pd.Series):
 def plot_produto_com_volume(
     df_filtrado: pd.DataFrame,
     indicadores: list,
+    timeframe: str = "Diário",
     height: int = 550,
 ) -> go.Figure:
     """
     Gráfico candlestick + volume em barras.
-    Usa eixo categórico (apenas dias com negociação).
+    Usa eixo categórico (apenas períodos com negociação).
     """
     if df_filtrado.empty:
         fig = go.Figure()
         fig.add_annotation(text="Sem dados disponíveis", x=0.5, y=0.5, showarrow=False)
         return fig
 
-    datas_str = df_filtrado.index.strftime("%d/%m").tolist()
+    date_fmt = TIMEFRAME_DATE_FMT.get(timeframe, "%d/%m")
+    datas_str = df_filtrado.index.strftime(date_fmt).tolist()
 
     fig = make_subplots(
         rows=2,
@@ -168,6 +172,7 @@ def plot_spread_area(
     df_produto2: pd.DataFrame,
     nome1: str,
     nome2: str,
+    timeframe: str = "Diário",
     height: int = 550,
 ) -> go.Figure:
     """
@@ -196,7 +201,8 @@ def plot_spread_area(
         )
 
     ultimo_spread = df_spread["spread"].iloc[-1]
-    datas_str = df_spread.index.strftime("%d/%m").tolist()
+    date_fmt = TIMEFRAME_DATE_FMT.get(timeframe, "%d/%m")
+    datas_str = df_spread.index.strftime(date_fmt).tolist()
 
     fig = go.Figure()
     fig.add_trace(

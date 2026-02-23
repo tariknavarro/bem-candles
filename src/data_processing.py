@@ -50,57 +50,86 @@ def calcular_indicadores(
     return df
 
 
-def calcular_vwap(df_product: pd.DataFrame) -> pd.Series:
+def calcular_vwap(df_product: pd.DataFrame, timeframe: str = "Diário") -> pd.Series:
     """
-    Calcula o preço médio ponderado por volume (VWAP) para cada dia.
-    Retorna Series com índice DatetimeIndex (datas).
+    Calcula o preço médio ponderado por volume (VWAP) agrupado pelo timeframe.
+    Retorna Series com índice DatetimeIndex compatível com o resultado de build_ohlc.
     """
     if df_product.empty:
         return pd.Series(dtype=float)
 
-    df = df_product.copy()
-    df["data"] = df.index.normalize()  # DatetimeIndex truncado ao dia
+    rule = TIMEFRAME_RESAMPLE.get(timeframe, "D")
 
+    # Agrupa pelo mesmo período do resample para compatibilidade com o índice do OHLC
+    grouped = df_product.resample(rule)
     vwap_dict = {}
-    for data, grupo in df.groupby("data"):
+    for periodo, grupo in grouped:
         total_qty = grupo["quantity"].sum()
         if total_qty > 0:
-            vwap_dict[data] = (grupo["unitPrice"] * grupo["quantity"]).sum() / total_qty
+            vwap_dict[periodo] = (
+                (grupo["unitPrice"] * grupo["quantity"]).sum() / total_qty
+            )
 
     return pd.Series(vwap_dict)
 
 
-def build_ohlc(df_product: pd.DataFrame) -> pd.DataFrame:
+# Mapeamento timeframe → regra de resample do pandas
+TIMEFRAME_RESAMPLE = {
+    "Diário":     "D",
+    "Semanal":    "W",
+    "Quinzenal":  "SM",   # semi-month: cortes em 1º e 15 de cada mês
+    "Mensal":     "ME",   # month-end
+}
+
+# Formato de data exibido no eixo X de cada timeframe
+TIMEFRAME_DATE_FMT = {
+    "Diário":    "%d/%m",
+    "Semanal":   "%d/%m",
+    "Quinzenal": "%d/%m",
+    "Mensal":    "%b/%y",
+}
+
+
+def build_ohlc(df_product: pd.DataFrame, timeframe: str = "Diário") -> pd.DataFrame:
     """
-    Constrói DataFrame OHLC diário a partir dos trades de um produto.
-    Remove dias sem negociação.
+    Constrói DataFrame OHLC a partir dos trades de um produto.
+    Remove períodos sem negociação.
+
+    Timeframes disponíveis: Diário, Semanal, Quinzenal, Mensal.
     """
     if df_product.empty:
         return pd.DataFrame()
 
-    df_ohlc = df_product["unitPrice"].resample("D").ohlc()
-    df_ohlc["volume"] = df_product.resample("D")["quantity"].sum()
+    rule = TIMEFRAME_RESAMPLE.get(timeframe, "D")
+    df_ohlc = df_product["unitPrice"].resample(rule).ohlc()
+    df_ohlc["volume"] = df_product.resample(rule)["quantity"].sum()
     return df_ohlc.dropna()
 
 
 def criar_tabela_ohlc(
-    df_ohlc: pd.DataFrame, vwap: pd.Series
+    df_ohlc: pd.DataFrame, vwap: pd.Series, timeframe: str = "Diário"
 ) -> pd.DataFrame:
     """
     Retorna tabela com OHLC, VWAP e volume para exibição.
     Mostra até 60 registros, do mais recente ao mais antigo.
+    O formato da coluna Data se adapta ao timeframe.
     """
     if df_ohlc.empty:
         return pd.DataFrame()
+
+    # Formato de data por timeframe
+    date_fmt = {
+        "Diário":    "%d/%m/%Y",
+        "Semanal":   "Sem %d/%m/%Y",
+        "Quinzenal": "%d/%m/%Y",
+        "Mensal":    "%b/%Y",
+    }.get(timeframe, "%d/%m/%Y")
 
     df_ultimos = df_ohlc.tail(60).iloc[::-1].copy()
     rows = []
 
     for idx, row in df_ultimos.iterrows():
-        # Busca VWAP pelo índice normalizado (datetime sem hora)
-        data_key = idx.normalize()
-        preco_medio = vwap.get(data_key)
-
+        preco_medio = vwap.get(idx)
         if preco_medio is None or pd.isna(preco_medio):
             preco_medio = (
                 row["open"] + row["high"] + row["low"] + row["close"]
@@ -108,7 +137,7 @@ def criar_tabela_ohlc(
 
         rows.append(
             {
-                "Data": idx.strftime("%d/%m/%Y"),
+                "Data": idx.strftime(date_fmt),
                 "Open": round(row["open"], 2),
                 "High": round(row["high"], 2),
                 "Low": round(row["low"], 2),
