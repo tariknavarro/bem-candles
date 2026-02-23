@@ -16,8 +16,10 @@ def _get_secret(key: str) -> str:
         return os.getenv(key, "")
 
 
-def login_api(cod: int, email: str, password: str, api_key: str) -> list | None:
-    """Realiza login na BBCE e retorna [userId, idToken, companyId, refreshToken]."""
+def login_api(
+    cod: int, email: str, password: str, api_key: str
+) -> tuple[list | None, str | None]:
+    """Realiza login na BBCE e retorna ([userId, idToken, companyId, refreshToken], erro)."""
     url = AMBIENTE + "bus/v2/login"
     try:
         response = requests.post(
@@ -30,15 +32,18 @@ def login_api(cod: int, email: str, password: str, api_key: str) -> list | None:
         )
         if response.status_code == 200:
             data = response.json()
-            return [
+            return ([
                 data["userId"],
                 data["idToken"],
                 data["companyId"],
                 data["refreshToken"],
-            ]
-    except requests.RequestException:
-        pass
-    return None
+            ], None)
+        # Erro "esperado" (credenciais, API key, etc.)
+        body = (response.text or "").strip()
+        body_preview = body[:500] + ("..." if len(body) > 500 else "")
+        return (None, f"HTTP {response.status_code} no login. Resposta: {body_preview}")
+    except requests.RequestException as e:
+        return (None, f"Erro de rede no login: {e}")
 
 
 def get_wallet(token: str, api_key: str) -> str | None:
@@ -119,13 +124,38 @@ def connect_bbce() -> bool:
     Retorna True em caso de sucesso.
     """
     api_key = _get_secret("BBCE_API_KEY")
-    company_code = int(_get_secret("BBCE_COMPANY_CODE"))
+    company_code_raw = _get_secret("BBCE_COMPANY_CODE")
     email = _get_secret("BBCE_EMAIL")
     password = _get_secret("BBCE_PASSWORD")
 
-    login_result = login_api(company_code, email, password, api_key)
+    missing = [
+        k
+        for k, v in {
+            "BBCE_API_KEY": api_key,
+            "BBCE_COMPANY_CODE": company_code_raw,
+            "BBCE_EMAIL": email,
+            "BBCE_PASSWORD": password,
+        }.items()
+        if not v
+    ]
+    if missing:
+        st.error(
+            "Configuração BBCE incompleta. Preencha no `.env` (veja `env.example`): "
+            + ", ".join(missing)
+        )
+        return False
+
+    try:
+        company_code = int(company_code_raw)
+    except ValueError:
+        st.error("`BBCE_COMPANY_CODE` precisa ser numérico (ex.: 1447).")
+        return False
+
+    login_result, login_err = login_api(company_code, email, password, api_key)
     if not login_result:
         st.error("Falha no login com a BBCE.")
+        if login_err:
+            st.caption(login_err)
         return False
 
     token = login_result[1]

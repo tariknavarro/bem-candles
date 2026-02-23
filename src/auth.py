@@ -7,6 +7,9 @@ def check_credentials(login: str, senha: str) -> bool:
     """Valida login e senha contra variáveis de ambiente ou st.secrets."""
     expected_login = _get_secret("DASHBOARD_LOGIN")
     expected_password = _get_secret("DASHBOARD_PASSWORD")
+    if not expected_login or not expected_password:
+        # Sem credenciais configuradas: não autentica ninguém (e evita "falso positivo").
+        return False
     return login == expected_login and senha == expected_password
 
 
@@ -20,6 +23,17 @@ def _get_secret(key: str) -> str:
 
 def show_login():
     """Renderiza o formulário de login centralizado."""
+    expected_login = _get_secret("DASHBOARD_LOGIN")
+    expected_password = _get_secret("DASHBOARD_PASSWORD")
+    if not expected_login or not expected_password:
+        st.warning(
+            "A autenticação do dashboard ainda não está configurada.\n\n"
+            "Crie um arquivo `.env` a partir de `env.example` e preencha:\n"
+            "- `DASHBOARD_LOGIN`\n"
+            "- `DASHBOARD_PASSWORD`",
+            icon="⚠️",
+        )
+
     st.markdown(
         """
         <div style='display:flex; justify-content:center; align-items:center; min-height:70vh;'>
