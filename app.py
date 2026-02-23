@@ -104,11 +104,6 @@ def main():
     if "logado_bbce" not in st.session_state:
         st.session_state.logado_bbce = False
 
-    st.markdown(
-        "<h1 style='text-align:center; margin:0.1rem 0;'>📊 BEM Energia Dashboard</h1>",
-        unsafe_allow_html=True,
-    )
-
     # --- Login do usuário ---
     if not st.session_state.autenticado:
         show_login()
@@ -127,6 +122,11 @@ def main():
                 if st.button("Tentar novamente"):
                     st.rerun()
                 return
+
+    st.markdown(
+        "<h1 style='text-align:center; margin:0.1rem 0;'>📊 BEM Energia Dashboard</h1>",
+        unsafe_allow_html=True,
+    )
 
     # --- Cabeçalho com data de atualização ---
     if st.session_state.get("ultima_atualizacao"):
