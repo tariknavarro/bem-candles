@@ -74,6 +74,43 @@ def plot_produto_com_volume(
                 col=1,
             )
 
+        elif ind == "SAR Parabólico" and "SAR" in df_filtrado.columns:
+            # Pontos bull (SAR abaixo do preço) em verde, bear em vermelho
+            sar = df_filtrado["SAR"]
+            bull_mask = df_filtrado.get("SAR_bull", pd.Series(True, index=df_filtrado.index))
+
+            x_bull = [datas_str[i] for i in range(len(datas_str)) if bull_mask.iloc[i]]
+            y_bull = [sar.iloc[i] for i in range(len(sar)) if bull_mask.iloc[i]]
+            x_bear = [datas_str[i] for i in range(len(datas_str)) if not bull_mask.iloc[i]]
+            y_bear = [sar.iloc[i] for i in range(len(sar)) if not bull_mask.iloc[i]]
+
+            if x_bull:
+                fig.add_trace(
+                    go.Scatter(
+                        x=x_bull,
+                        y=y_bull,
+                        mode="markers",
+                        name="SAR ↑",
+                        marker=dict(color="#26a69a", size=5, symbol="circle"),
+                        showlegend=True,
+                    ),
+                    row=1,
+                    col=1,
+                )
+            if x_bear:
+                fig.add_trace(
+                    go.Scatter(
+                        x=x_bear,
+                        y=y_bear,
+                        mode="markers",
+                        name="SAR ↓",
+                        marker=dict(color="#ef5350", size=5, symbol="circle"),
+                        showlegend=True,
+                    ),
+                    row=1,
+                    col=1,
+                )
+
         elif ind == "Bollinger Bands 8" and "BB_upper" in df_filtrado.columns:
             ultimo_mid = _last_valid(df_filtrado["BB_mid"])
 

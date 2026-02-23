@@ -141,7 +141,7 @@ def main():
     with col_ind:
         indicadores = st.multiselect(
             "📊 Indicadores",
-            options=["SMA8", "SMA20", "SMA50", "Bollinger Bands 8"],
+            options=["SMA8", "SMA20", "SMA50", "Bollinger Bands 8", "SAR Parabólico"],
             default=["SMA8", "SMA20"],
             key="indicadores_main",
         )

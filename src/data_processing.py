@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 from datetime import datetime, timedelta
 
@@ -20,6 +21,70 @@ def get_filtered_data_by_range(df: pd.DataFrame, range_type: str) -> pd.DataFram
         return df
 
     return df[df.index >= ranges[range_type]]
+
+
+def _calcular_sar(df: pd.DataFrame, af_step: float = 0.02, af_max: float = 0.20) -> pd.Series:
+    """
+    Calcula o Parabolic SAR usando o algoritmo iterativo padrão de Wilder.
+    Retorna uma Series com o mesmo índice do DataFrame.
+    """
+    highs = df["high"].values
+    lows = df["low"].values
+    n = len(highs)
+
+    if n < 2:
+        return pd.Series([np.nan] * n, index=df.index)
+
+    sar = np.full(n, np.nan)
+    # Inicializa: assume tendência de alta
+    bull = True
+    af = af_step
+    ep = highs[0]          # Extreme Point
+    sar[0] = lows[0]       # SAR inicial
+
+    for i in range(1, n):
+        prev_sar = sar[i - 1]
+
+        if bull:
+            # Tendência de alta: SAR sobe, abaixo do preço
+            sar[i] = prev_sar + af * (ep - prev_sar)
+            # SAR não pode estar acima das duas mínimas anteriores
+            if i >= 2:
+                sar[i] = min(sar[i], lows[i - 1], lows[i - 2])
+            else:
+                sar[i] = min(sar[i], lows[i - 1])
+
+            if lows[i] < sar[i]:
+                # Reversão: passa para tendência de baixa
+                bull = False
+                sar[i] = ep          # SAR vai para o EP anterior (máxima)
+                ep = lows[i]
+                af = af_step
+            else:
+                if highs[i] > ep:
+                    ep = highs[i]
+                    af = min(af + af_step, af_max)
+        else:
+            # Tendência de baixa: SAR cai, acima do preço
+            sar[i] = prev_sar + af * (ep - prev_sar)
+            # SAR não pode estar abaixo das duas máximas anteriores
+            if i >= 2:
+                sar[i] = max(sar[i], highs[i - 1], highs[i - 2])
+            else:
+                sar[i] = max(sar[i], highs[i - 1])
+
+            if highs[i] > sar[i]:
+                # Reversão: passa para tendência de alta
+                bull = True
+                sar[i] = ep          # SAR vai para o EP anterior (mínima)
+                ep = highs[i]
+                af = af_step
+            else:
+                if lows[i] < ep:
+                    ep = lows[i]
+                    af = min(af + af_step, af_max)
+
+    return pd.Series(sar, index=df.index)
 
 
 def calcular_indicadores(
@@ -46,6 +111,10 @@ def calcular_indicadores(
         df["BB_upper"] = rolling_mean + (rolling_std * 2)
         df["BB_mid"] = rolling_mean
         df["BB_lower"] = rolling_mean - (rolling_std * 2)
+    if "SAR Parabólico" in indicadores:
+        df["SAR"] = _calcular_sar(df)
+        # Marca tendência: True = bull (SAR abaixo do close), False = bear
+        df["SAR_bull"] = df["SAR"] < df["close"]
 
     return df
 
