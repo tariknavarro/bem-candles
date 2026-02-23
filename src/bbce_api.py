@@ -1,25 +1,12 @@
-import os
 import json
 import requests
 import pandas as pd
 import streamlit as st
 from datetime import datetime
 
+from src.secrets import get_secret as _get_secret
+
 AMBIENTE = "https://api-ehub.bbce.com.br/"
-
-
-def _get_secret(key: str) -> str:
-    """
-    Lê segredo do st.secrets (Streamlit Cloud) ou de variável de ambiente.
-    Verifica 'key in st.secrets' antes de acessar, evitando o aviso de console
-    'No secrets found' quando não há secrets.toml configurado.
-    """
-    try:
-        if hasattr(st, "secrets") and key in st.secrets:
-            return st.secrets[key]
-    except Exception:
-        pass
-    return os.getenv(key, "")
 
 
 def login_api(
