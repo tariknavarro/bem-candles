@@ -3,6 +3,11 @@ from datetime import datetime
 
 from src.secrets import get_secret as _get_secret
 
+# Cor principal da marca BEM Energia (verde-limão da logo)
+BEM_GREEN = "#C8E600"
+BEM_GREEN_DARK = "#a8c200"
+BEM_NAVY = "#0f2744"
+
 
 def check_credentials(login: str, senha: str) -> bool:
     """Valida login e senha contra variáveis de ambiente ou st.secrets."""
@@ -14,252 +19,223 @@ def check_credentials(login: str, senha: str) -> bool:
 
 
 def show_login():
-    """Renderiza a página de login com fundo gradiente e card moderno."""
+    """Renderiza a página de login com identidade visual BEM Energia."""
 
     st.markdown(
-        """
+        f"""
         <style>
-        /* Remove padding padrão e esconde elementos do Streamlit */
-        #MainMenu, footer, header { visibility: hidden; }
-        .main > div { padding-top: 0 !important; }
-        .block-container {
+        /* ── Reset Streamlit na tela de login ── */
+        #MainMenu, footer, header {{ visibility: hidden; }}
+        .main > div {{ padding-top: 0 !important; }}
+        .block-container {{
             padding: 0 !important;
             max-width: 100% !important;
-        }
+        }}
 
-        /* Fundo com gradiente animado */
-        .login-bg {
+        /* ── Fundo escuro fixo ── */
+        .login-bg {{
             position: fixed;
             inset: 0;
-            background: linear-gradient(135deg, #0f2744 0%, #1a4a7a 40%, #0d3359 70%, #071e35 100%);
-            background-size: 400% 400%;
-            animation: gradientShift 12s ease infinite;
+            background: {BEM_NAVY};
             z-index: 0;
-        }
+            overflow: hidden;
+        }}
 
-        @keyframes gradientShift {
-            0%   { background-position: 0% 50%; }
-            50%  { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        /* Partículas decorativas */
-        .login-bg::before {
+        /* Círculos decorativos com verde BEM */
+        .login-bg::before {{
             content: '';
             position: absolute;
-            width: 400px;
-            height: 400px;
-            background: radial-gradient(circle, rgba(26,111,175,0.15) 0%, transparent 70%);
-            top: -100px;
-            right: -100px;
+            width: 600px; height: 600px;
             border-radius: 50%;
-        }
-        .login-bg::after {
+            background: radial-gradient(circle, {BEM_GREEN}18 0%, transparent 65%);
+            top: -180px; right: -180px;
+        }}
+        .login-bg::after {{
             content: '';
             position: absolute;
-            width: 300px;
-            height: 300px;
-            background: radial-gradient(circle, rgba(26,175,155,0.1) 0%, transparent 70%);
-            bottom: -80px;
-            left: -80px;
+            width: 450px; height: 450px;
             border-radius: 50%;
-        }
+            background: radial-gradient(circle, {BEM_GREEN}10 0%, transparent 65%);
+            bottom: -120px; left: -120px;
+        }}
 
-        /* Wrapper centralizado */
-        .login-wrapper {
-            position: relative;
+        /* ── Faixa lateral esquerda (decoração) ── */
+        .login-stripe {{
+            position: fixed;
+            left: 0; top: 0; bottom: 0;
+            width: 6px;
+            background: linear-gradient(180deg, {BEM_GREEN} 0%, {BEM_GREEN}44 100%);
             z-index: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            padding: 2rem;
-        }
+        }}
 
-        /* Card principal */
-        .login-card {
-            background: rgba(255, 255, 255, 0.97);
-            backdrop-filter: blur(20px);
-            padding: 3rem 2.75rem 2.25rem;
-            border-radius: 20px;
-            box-shadow:
-                0 20px 60px rgba(0, 0, 0, 0.35),
-                0 4px 16px rgba(0, 0, 0, 0.15),
-                inset 0 1px 0 rgba(255,255,255,0.6);
-            max-width: 420px;
-            width: 100%;
-            border: 1px solid rgba(255,255,255,0.3);
-            animation: cardIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
-        }
-
-        @keyframes cardIn {
-            from { opacity: 0; transform: translateY(24px) scale(0.97); }
-            to   { opacity: 1; transform: translateY(0) scale(1); }
-        }
-
-        /* Logo / ícone */
-        .login-logo-wrap {
-            display: flex;
-            justify-content: center;
-            margin-bottom: 1.25rem;
-        }
-        .login-logo-circle {
-            width: 64px;
-            height: 64px;
+        /* ── Card ── */
+        .login-card {{
+            background: #ffffff;
             border-radius: 16px;
-            background: linear-gradient(135deg, #1a6faf 0%, #26a69a 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.9rem;
-            box-shadow: 0 6px 20px rgba(26,111,175,0.4);
-        }
+            padding: 2.5rem 2rem 2rem;
+            box-shadow:
+                0 24px 64px rgba(0,0,0,0.45),
+                0 4px 16px rgba(0,0,0,0.2);
+            border-top: 4px solid {BEM_GREEN};
+            animation: cardIn 0.45s cubic-bezier(0.16,1,0.3,1) both;
+            position: relative;
+            z-index: 2;
+        }}
+        @keyframes cardIn {{
+            from {{ opacity:0; transform: translateY(20px); }}
+            to   {{ opacity:1; transform: translateY(0); }}
+        }}
 
-        /* Títulos */
-        .login-title {
-            text-align: center;
-            font-size: 1.65rem;
-            font-weight: 800;
-            color: #0f2744;
-            margin-bottom: 0.2rem;
-            letter-spacing: -0.5px;
-        }
-        .login-subtitle {
-            text-align: center;
-            font-size: 0.82rem;
+        /* ── Logo text ── */
+        .bem-logo {{
+            font-size: 3rem;
+            font-weight: 900;
+            letter-spacing: -2px;
+            color: {BEM_NAVY};
+            line-height: 1;
+        }}
+        .bem-logo span {{
+            color: {BEM_GREEN};
+        }}
+        .bem-tagline {{
+            font-size: 0.78rem;
             color: #8a9ab5;
-            margin-bottom: 2rem;
-            font-weight: 400;
-        }
-
-        /* Labels dos campos */
-        .field-label {
-            font-size: 0.8rem;
-            font-weight: 600;
-            color: #4a5568;
-            margin-bottom: 0.35rem;
-            letter-spacing: 0.3px;
+            font-weight: 500;
+            letter-spacing: 1.5px;
             text-transform: uppercase;
-        }
+            margin-top: 0.15rem;
+            margin-bottom: 1.75rem;
+        }}
 
-        /* Inputs */
-        div[data-testid="stForm"] input {
-            border-radius: 10px !important;
+        /* ── Labels ── */
+        .field-label {{
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: #4a5568;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            margin-bottom: 0.3rem;
+        }}
+        .field-gap {{ margin-top: 0.85rem; }}
+
+        /* ── Inputs — override Streamlit ── */
+        div[data-testid="stForm"] input {{
+            border-radius: 8px !important;
             border: 1.5px solid #e2e8f0 !important;
-            padding: 0.65rem 0.9rem !important;
-            font-size: 0.95rem !important;
-            background: #f8fafc !important;
+            font-size: 0.9rem !important;
+            background: #f9fafb !important;
             color: #1a202c !important;
-            transition: all 0.2s ease !important;
-        }
-        div[data-testid="stForm"] input:focus {
-            border-color: #1a6faf !important;
+            transition: border-color 0.2s, box-shadow 0.2s !important;
+        }}
+        div[data-testid="stForm"] input:focus {{
+            border-color: {BEM_GREEN} !important;
             background: #fff !important;
-            box-shadow: 0 0 0 3px rgba(26,111,175,0.12) !important;
-        }
-        div[data-testid="stForm"] input::placeholder {
-            color: #b0bec5 !important;
-        }
+            box-shadow: 0 0 0 3px {BEM_GREEN}33 !important;
+            outline: none !important;
+        }}
+        div[data-testid="stForm"] input::placeholder {{
+            color: #c0ccd8 !important;
+        }}
 
-        /* Botão entrar */
-        div[data-testid="stForm"] button[kind="primaryFormSubmit"] {
-            background: linear-gradient(135deg, #1a6faf 0%, #1557a0 100%) !important;
-            color: white !important;
-            border-radius: 10px !important;
-            height: 2.9rem !important;
-            font-size: 0.95rem !important;
-            font-weight: 700 !important;
+        /* ── Botão Entrar ── */
+        div[data-testid="stForm"] button[kind="primaryFormSubmit"] {{
+            background: {BEM_GREEN} !important;
+            color: {BEM_NAVY} !important;
+            border-radius: 8px !important;
+            height: 2.75rem !important;
+            font-size: 0.9rem !important;
+            font-weight: 800 !important;
             width: 100% !important;
             border: none !important;
-            margin-top: 0.75rem !important;
-            letter-spacing: 0.3px !important;
-            box-shadow: 0 4px 15px rgba(26,111,175,0.4) !important;
+            margin-top: 1rem !important;
+            letter-spacing: 0.5px !important;
+            box-shadow: 0 4px 14px {BEM_GREEN}55 !important;
             transition: all 0.2s ease !important;
-        }
-        div[data-testid="stForm"] button[kind="primaryFormSubmit"]:hover {
-            background: linear-gradient(135deg, #155a8a 0%, #0f4478 100%) !important;
-            box-shadow: 0 6px 20px rgba(26,111,175,0.5) !important;
+        }}
+        div[data-testid="stForm"] button[kind="primaryFormSubmit"]:hover {{
+            background: {BEM_GREEN_DARK} !important;
+            box-shadow: 0 6px 18px {BEM_GREEN}66 !important;
             transform: translateY(-1px) !important;
-        }
-        div[data-testid="stForm"] button[kind="primaryFormSubmit"]:active {
+        }}
+        div[data-testid="stForm"] button[kind="primaryFormSubmit"]:active {{
             transform: translateY(0) !important;
-        }
+        }}
 
-        /* Divisor */
-        .login-divider {
+        /* ── Divisor e footer ── */
+        .login-sep {{
             border: none;
             border-top: 1px solid #edf2f7;
-            margin: 1.75rem 0 1.25rem;
-        }
-
-        /* Footer */
-        .login-footer {
+            margin: 1.5rem 0 1rem;
+        }}
+        .login-footer {{
             text-align: center;
-            font-size: 0.72rem;
+            font-size: 0.7rem;
             color: #b0bec5;
-        }
-        .login-footer span {
-            color: #90a0b7;
-            font-weight: 500;
-        }
+        }}
+        .login-footer b {{ color: #8a9ab5; font-weight: 600; }}
 
-        /* Alerts dentro do form */
-        div[data-testid="stForm"] div[data-testid="stAlert"] {
+        /* ── Alerts ── */
+        div[data-testid="stForm"] div[data-testid="stAlert"] {{
             border-radius: 8px !important;
-            font-size: 0.85rem !important;
-        }
+            font-size: 0.82rem !important;
+            margin-top: 0.5rem !important;
+        }}
         </style>
 
         <div class="login-bg"></div>
-        <div class="login-wrapper">
-          <div class="login-card">
-            <div class="login-logo-wrap">
-              <div class="login-logo-circle">⚡</div>
-            </div>
-            <div class="login-title">BEM Energia</div>
-            <div class="login-subtitle">Dashboard de Mercado &nbsp;·&nbsp; Acesso Restrito</div>
-            <div class="field-label">Usuário</div>
+        <div class="login-stripe"></div>
         """,
         unsafe_allow_html=True,
     )
 
-    with st.form("login_form", clear_on_submit=False):
-        login = st.text_input(
-            "Usuário",
-            placeholder="Digite seu usuário",
-            label_visibility="collapsed",
+    # Centraliza usando colunas do Streamlit (evita quebra de layout)
+    _, col_center, _ = st.columns([1, 1.2, 1])
+
+    with col_center:
+        # Cabeçalho do card
+        st.markdown(
+            f"""
+            <div class="login-card">
+              <div class="bem-logo">bem<span>.</span></div>
+              <div class="bem-tagline">energia &nbsp;·&nbsp; dashboard de mercado</div>
+              <div class="field-label">Usuário</div>
+            """,
+            unsafe_allow_html=True,
         )
 
-        st.markdown("<div class='field-label' style='margin-top:0.9rem;'>Senha</div>", unsafe_allow_html=True)
+        with st.form("login_form", clear_on_submit=False):
+            login = st.text_input(
+                "Usuário",
+                placeholder="Digite seu usuário",
+                label_visibility="collapsed",
+            )
 
-        senha = st.text_input(
-            "Senha",
-            type="password",
-            placeholder="••••••••",
-            label_visibility="collapsed",
-        )
+            st.markdown("<div class='field-label field-gap'>Senha</div>", unsafe_allow_html=True)
 
-        submitted = st.form_submit_button("Entrar →", use_container_width=True)
+            senha = st.text_input(
+                "Senha",
+                type="password",
+                placeholder="••••••••",
+                label_visibility="collapsed",
+            )
 
-        if submitted:
-            if not login or not senha:
-                st.warning("Preencha usuário e senha.")
-            elif check_credentials(login, senha):
-                st.session_state["autenticado"] = True
-                st.session_state["login_time"] = datetime.now()
-                st.rerun()
-            else:
-                st.error("Usuário ou senha incorretos.")
+            submitted = st.form_submit_button("Entrar →", use_container_width=True)
 
-    st.markdown(
-        """
-            <hr class="login-divider">
-            <div class="login-footer">
-              © 2026 <span>BEM Energia</span> &nbsp;·&nbsp; Todos os direitos reservados
+            if submitted:
+                if not login or not senha:
+                    st.warning("Preencha usuário e senha.")
+                elif check_credentials(login, senha):
+                    st.session_state["autenticado"] = True
+                    st.session_state["login_time"] = datetime.now()
+                    st.rerun()
+                else:
+                    st.error("Usuário ou senha incorretos.")
+
+        st.markdown(
+            """
+            <hr class="login-sep">
+            <div class="login-footer">© 2026 <b>BEM Energia</b> · Todos os direitos reservados</div>
             </div>
-          </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+            """,
+            unsafe_allow_html=True,
+        )
